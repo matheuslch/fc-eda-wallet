@@ -1,90 +1,34 @@
 version: '3'
 
 services:
-  go-wallet-core: 
-    build:
-      context: ./ms-wallet-core
+  goapp: 
+    build: .
     platform: linux/amd64
-    depends_on:
-      wallet-core-mysql:
-        condition: service_healthy
     volumes:
-      - ./ms-wallet-core:/app
-    networks:
-      - wallet      
+      - .:/app
     ports:
       - 8080:8080
 
-  go-wallet-balance: 
-    build:
-      context: ./ms-wallet-balance
-    platform: linux/amd64
-    depends_on:
-      wallet-balance-mysql:
-        condition: service_healthy
-    volumes:
-      - ./ms-wallet-balance:/app
-    networks:
-      - wallet      
-    ports:
-      - 8090:8090
-
-  wallet-core-mysql:
+  wallet-mysql:
     image: mysql:latest
     command: --default-authentication-plugin=mysql_native_password
     platform: linux/amd64
-    container_name: wallet-core-mysql
-    healthcheck:
-      test: mysqladmin ping -h 127.0.0.1 -u $$MYSQL_USER --password=$$MYSQL_PASSWORD
-      start_period: 2s
-      interval: 3s
-      timeout: 5s
-      retries: 5
+    container_name: wallet-mysql
     tty: true
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: wallet
       MYSQL_PASSWORD: root
-      MYSQL_TCP_PORT: 3307
-    networks:
-      - wallet      
     ports:
-      - 3307:3307
+      - 3306:3306
     volumes:
-      - ./ms-wallet-core/.docker/mysql:/var/lib/mysql
-    user: mysql
-
-  wallet-balance-mysql:
-    image: mysql:latest
-    command: --default-authentication-plugin=mysql_native_password
-    platform: linux/amd64
-    container_name: wallet-balance-mysql
-    healthcheck:
-      test: mysqladmin ping -h 127.0.0.1 -u $$MYSQL_USER --password=$$MYSQL_PASSWORD
-      start_period: 2s
-      interval: 3s
-      timeout: 5s
-      retries: 5
-    tty: true
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: wallet
-      MYSQL_PASSWORD: root
-      MYSQL_TCP_PORT: 3308
-    networks:
-      - wallet      
-    ports:
-      - 3308:3308
-    volumes:
-      - ./ms-wallet-balance/.docker/mysql:/var/lib/mysql
+      - .docker/mysql:/var/lib/mysql
     user: mysql
 
   zookeeper:
     image: "confluentinc/cp-zookeeper:6.1.0"
     platform: linux/amd64
     container_name: zookeeper
-    networks:
-      - wallet    
     ports:
       - 2181:2181
     environment:
@@ -98,8 +42,6 @@ services:
     container_name: kafka
     depends_on:
       - zookeeper
-    networks:
-      - wallet      
     ports:
     # Exposes 9092 for external connections to the broker
     # Use kafka:29092 for connections internal on the docker network
@@ -111,14 +53,13 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://0.0.0.0:9092
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 100
-      CONFLUENT_METRICS_ENABLE: 'false'      
+      CONFLUENT_METRICS_ENABLE: 'false'
 
   control-center:
     image: confluentinc/cp-enterprise-control-center:7.3.0
@@ -127,8 +68,6 @@ services:
     container_name: control-center
     depends_on:
       - kafka
-    networks:
-      - wallet
     ports:
       - "9021:9021"
     environment:
@@ -138,7 +77,3 @@ services:
       CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
       CONFLUENT_METRICS_TOPIC_REPLICATION: 1
       PORT: 9021
-
-networks:
-  wallet:
-    driver: bridge      
