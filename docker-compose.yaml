@@ -39,7 +39,7 @@ services:
       start_period: 2s
       interval: 3s
       timeout: 5s
-      retries: 10
+      retries: 20
     tty: true
     restart: always
     environment:
@@ -52,8 +52,7 @@ services:
     ports:
       - 3307:3307
     volumes:
-      - ./ms-wallet-core/.docker/mysql:/var/lib/mysql
-    user: mysql
+      - core-mysql-data:/var/lib/mysql
 
   wallet-balance-mysql:
     image: mysql:latest
@@ -65,7 +64,7 @@ services:
       start_period: 2s
       interval: 3s
       timeout: 5s
-      retries: 10
+      retries: 20
     tty: true
     restart: always
     environment:
@@ -78,8 +77,7 @@ services:
     ports:
       - 3308:3308
     volumes:
-      - ./ms-wallet-balance/.docker/mysql:/var/lib/mysql
-    user: mysql
+      - balance-mysql-data:/var/lib/mysql
 
   zookeeper:
     image: "confluentinc/cp-zookeeper:6.1.0"
@@ -144,3 +142,10 @@ services:
 networks:
   wallet:
     driver: bridge
+
+volumes:
+  core-mysql-data:
+    name: wallet_core-mysql-data
+  balance-mysql-data:
+    name: wallet_balance-mysql-data
+    
