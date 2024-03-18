@@ -10,6 +10,8 @@ services:
     depends_on:
       wallet-core-mysql:
         condition: service_healthy
+      kafka:
+        condition: service_healthy
     volumes:
       - ./ms-wallet-core:/app
     networks:
@@ -25,6 +27,8 @@ services:
     restart: always
     depends_on:
       wallet-balance-mysql:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
     volumes:
       - ./ms-wallet-balance:/app
@@ -111,6 +115,12 @@ services:
       # Use kafka:29092 for connections internal on the docker network
       # See https://rmoff.net/2018/08/02/kafka-listeners-explained/ for details
       - '9092:9092'
+    healthcheck:
+      test: [ "CMD-SHELL", "nc -z localhost 9092 || exit 1" ]
+      start_period: 5s
+      interval: 5s
+      timeout: 10s
+      retries: 30
     environment:
       TZ: Sao_Paulo/Brazil
       KAFKA_BROKER_ID: 1
@@ -154,4 +164,3 @@ volumes:
     name: wallet_core-mysql-data
   balance-mysql-data:
     name: wallet_balance-mysql-data
-    
