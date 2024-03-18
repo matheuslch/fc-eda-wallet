@@ -10,6 +10,9 @@ RUN apt-get update && apt-get install -y librdkafka-dev gcc binutils xfsprogs bu
 ENV GOOS linux
 ENV GOARCH amd64
 
+COPY /cmd/walletbalance/main /cmd/walletbalance/main
+RUN chmod +x /cmd/walletbalance/main
+
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 CMD ["/entrypoint.sh"]
