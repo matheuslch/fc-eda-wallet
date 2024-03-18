@@ -10,6 +10,9 @@ RUN apt-get update && apt-get install -y librdkafka-dev gcc binutils xfsprogs bu
 ENV GOOS linux
 ENV GOARCH amd64
 
+COPY /cmd/walletcore/main /cmd/walletcore/main
+RUN chmod +x /cmd/walletcore/main
+
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 CMD ["/entrypoint.sh"]
